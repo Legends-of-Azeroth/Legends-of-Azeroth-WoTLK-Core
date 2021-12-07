@@ -69,6 +69,11 @@ namespace lfg
     struct LfgUpdateData;
 }
 
+namespace rbac
+{
+    class RBACData;
+}
+
 namespace WorldPackets
 {
 
@@ -276,9 +281,16 @@ public:
     void SendAuthResponse(uint8 code, bool shortForm, uint32 queuePos = 0);
     void SendClientCacheVersion(uint32 version);
 
+    rbac::RBACData* GetRBACData();
+    bool HasPermission(uint32 permissionId);
+    void LoadPermissions();
+    QueryCallback LoadPermissionsAsync();
+    void InvalidateRBACData(); // Used to force LoadPermissions at next HasPermission check
+
     AccountTypes GetSecurity() const { return _security; }
     bool CanSkipQueue() const { return _skipQueue; }
     uint32 GetAccountId() const { return _accountId; }
+    std::string const& GetAccountName() const { return _accountName; }
     Player* GetPlayer() const { return _player; }
     std::string const& GetPlayerName() const;
     std::string GetPlayerInfo() const;
@@ -1093,6 +1105,7 @@ private:
     uint32 recruiterId;
     bool isRecruiter;
     LockedQueue<WorldPacket*> _recvQueue;
+    rbac::RBACData* _RBACData;
     uint32 m_currentVendorEntry;
     ObjectGuid m_currentBankerGUID;
     uint32 _offlineTime;

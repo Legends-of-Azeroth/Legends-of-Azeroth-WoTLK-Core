@@ -163,6 +163,7 @@ public:
             { "waypoint_data",                 HandleReloadWpCommand,                         SEC_ADMINISTRATOR, Console::Yes },
             { "vehicle_accessory",             HandleReloadVehicleAccessoryCommand,           SEC_ADMINISTRATOR, Console::Yes },
             { "vehicle_template_accessory",    HandleReloadVehicleTemplateAccessoryCommand,   SEC_ADMINISTRATOR, Console::Yes },
+            { "rbac",                          HandleReloadRBACCommand,                       SEC_ADMINISTRATOR, Console::Yes },
         };
         static ChatCommandTable commandTable =
         {
@@ -1173,6 +1174,15 @@ public:
         LOG_INFO("server.loading", "Reloading game_graveyard table...");
         sGraveyard->LoadGraveyardFromDB();
         handler->SendGlobalGMSysMessage("DB table `game_graveyard` reloaded.");
+        return true;
+    }
+
+    static bool HandleReloadRBACCommand(ChatHandler* handler)
+    {
+        LOG_INFO("misc", "Reloading RBAC tables...");
+        sAccountMgr->LoadRBAC();
+        sWorld->ReloadRBAC();
+        handler->SendGlobalGMSysMessage("RBAC data reloaded.");
         return true;
     }
 };

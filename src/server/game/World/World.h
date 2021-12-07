@@ -360,8 +360,10 @@ public:
     void UpdateAreaDependentAuras();
 
     uint32 GetCleaningFlags() const { return m_CleaningFlags; }
-    void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
-    void   ResetEventSeasonalQuests(uint16 event_id);
+    void SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
+    void ResetEventSeasonalQuests(uint16 event_id);
+
+    void ReloadRBAC();
 
     time_t GetNextTimeWithDayAndHour(int8 dayOfWeek, int8 hour); // pussywizard
     time_t GetNextTimeWithMonthAndHour(int8 month, int8 hour); // pussywizard

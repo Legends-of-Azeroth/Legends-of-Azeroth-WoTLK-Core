@@ -26,6 +26,7 @@
 #include "Opcodes.h"
 #include "PacketLog.h"
 #include "Random.h"
+#include "RBAC.h"
 #include "Realm.h"
 #include "ScriptMgr.h"
 #include "World.h"
@@ -613,9 +614,16 @@ void WorldSocket::HandleAuthSessionCallback(std::shared_ptr<AuthSession> authSes
         _worldSession->InitWarden(account.SessionKey, account.OS);
     }
 
-    sWorld->AddSession(_worldSession);
-
+    _queryProcessor.AddCallback(_worldSession->LoadPermissionsAsync().WithPreparedCallback(std::bind(&WorldSocket::LoadSessionPermissionsCallback, this, std::placeholders::_1)));
     AsyncRead();
+}
+
+void WorldSocket::LoadSessionPermissionsCallback(PreparedQueryResult result)
+{
+    // RBAC must be loaded before adding session to check for skip queue permission
+    _worldSession->GetRBACData()->LoadFromDBCallback(result);
+
+    sWorld->AddSession(_worldSession);
 }
 
 void WorldSocket::SendAuthResponseError(uint8 code)

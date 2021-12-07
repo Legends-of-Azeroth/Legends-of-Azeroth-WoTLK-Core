@@ -45,6 +45,11 @@ char const* ChatHandler::GetAcoreString(uint32 entry) const
     return m_session->GetAcoreString(entry);
 }
 
+bool ChatHandler::HasPermission(uint32 permission) const
+{
+    return m_session->HasPermission(permission);
+}
+
 bool ChatHandler::IsAvailable(uint32 securityLevel) const
 {
     // check security level only for simple  command (without child commands)

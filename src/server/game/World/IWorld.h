@@ -364,6 +364,7 @@ enum WorldIntConfigs
     CONFIG_ICC_BUFF_ALLIANCE,
     CONFIG_ITEMDELETE_QUALITY,
     CONFIG_ITEMDELETE_ITEM_LEVEL,
+    CONFIG_ACC_PASSCHANGESEC,
     CONFIG_BG_REWARD_WINNER_HONOR_FIRST,
     CONFIG_BG_REWARD_WINNER_ARENA_FIRST,
     CONFIG_BG_REWARD_WINNER_HONOR_LAST,
@@ -586,6 +587,7 @@ public:
     virtual time_t GetNextTimeWithMonthAndHour(int8 month, int8 hour) = 0;
     virtual std::string const& GetRealmName() const = 0;
     virtual void SetRealmName(std::string name) = 0;
+    virtual void ReloadRBAC() = 0;
     virtual void RemoveOldCorpses() = 0;
 };
 

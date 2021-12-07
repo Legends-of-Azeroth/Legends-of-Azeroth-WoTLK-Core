@@ -50,6 +50,7 @@
 #include "World.h"
 #include "WorldPacket.h"
 #include "WorldSocket.h"
+#include "Realm.h"
 #include <zlib.h>
 
 namespace
@@ -128,6 +129,7 @@ WorldSession::WorldSession(uint32 id, std::string&& name, std::shared_ptr<WorldS
     m_TutorialsChanged(false),
     recruiterId(recruiter),
     isRecruiter(isARecruiter),
+    _RBACData(nullptr),
     m_currentVendorEntry(0),
     _calendarEventCreationCooldown(0),
     _timeSyncClockDeltaQueue(6),
@@ -166,6 +168,8 @@ WorldSession::~WorldSession()
         m_Socket->CloseSocket();
         m_Socket = nullptr;
     }
+
+    delete _RBACData;
 
     ///- empty incoming packet queue
     WorldPacket* packet = nullptr;
@@ -1287,6 +1291,52 @@ void WorldSession::InitWarden(SessionKey const& k, std::string const& os)
         // _warden = new WardenMac();
         // _warden->Init(this, k);
     }
+}
+
+void WorldSession::LoadPermissions()
+{
+    uint32 id = GetAccountId();
+    uint8 secLevel = GetSecurity();
+
+    _RBACData = new rbac::RBACData(id, _accountName, realm.Id.Realm, secLevel);
+    _RBACData->LoadFromDB();
+}
+
+QueryCallback WorldSession::LoadPermissionsAsync()
+{
+    uint32 id = GetAccountId();
+    uint8 secLevel = GetSecurity();
+
+    LOG_DEBUG("rbac", "WorldSession::LoadPermissions [AccountId: %u, Name: %s, realmId: %d, secLevel: %u]",
+                 id, _accountName.c_str(), realm.Id.Realm, secLevel);
+
+    _RBACData = new rbac::RBACData(id, _accountName, realm.Id.Realm, secLevel);
+    return _RBACData->LoadFromDBAsync();
+}
+
+rbac::RBACData* WorldSession::GetRBACData()
+{
+    return _RBACData;
+}
+
+bool WorldSession::HasPermission(uint32 permission)
+{
+    if (!_RBACData)
+        LoadPermissions();
+
+    bool hasPermission = _RBACData->HasPermission(permission);
+    LOG_DEBUG("rbac", "WorldSession::HasPermission [AccountId: %u, Name: %s, realmId: %d]",
+                 _RBACData->GetId(), _RBACData->GetName().c_str(), realm.Id.Realm);
+
+    return hasPermission;
+}
+
+void WorldSession::InvalidateRBACData()
+{
+    LOG_DEBUG("rbac", "WorldSession::Invalidaterbac::RBACData [AccountId: %u, Name: %s, realmId: %d]",
+                 _RBACData->GetId(), _RBACData->GetName().c_str(), realm.Id.Realm);
+    delete _RBACData;
+    _RBACData = nullptr;
 }
 
 bool WorldSession::DosProtection::EvaluateOpcode(WorldPacket& p, time_t time) const
