@@ -22,8 +22,8 @@
 #include "Common.h"
 #include "DBCEnums.h"
 #include "EventProcessor.h"
-#include <array>
 #include <deque>
+#include <array>
 
 #define COUNT_OF_PLAYERS_TO_AVERAGE_WAIT_TIME 10
 
@@ -130,7 +130,7 @@ public:
     ArenaType GetArenaType() { return m_arenaType; }
     BattlegroundTypeId GetBGTypeID() { return m_bgTypeId; }
 
-    void SetQueueAnnouncementTimer(uint32 bracketId, int32 timer, bool isCrossFactionBG = true);
+    void SetQueueAnnouncementTimer(uint32 bracketId, int32 timer);
     [[nodiscard]] int32 GetQueueAnnouncementTimer(uint32 bracketId) const;
 
 private:
