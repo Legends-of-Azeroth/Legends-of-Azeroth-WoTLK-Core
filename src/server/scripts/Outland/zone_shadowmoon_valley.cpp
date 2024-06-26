@@ -15,6 +15,14 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "CreatureScript.h"
+#include "GameObjectScript.h"
+#include "Group.h"
+#include "Player.h"
+#include "ScriptedCreature.h"
+#include "ScriptedGossip.h"
+#include "SpellScript.h"
+#include "SpellScriptLoader.h"
 /* ScriptData
 SDName: Shadowmoon_Valley
 SD%Complete: 100
@@ -36,101 +44,82 @@ go_crystal_prison
 npc_enraged_spirit
 EndContentData */
 
-#include "Group.h"
-#include "Player.h"
-#include "ScriptMgr.h"
-#include "ScriptedCreature.h"
-#include "ScriptedGossip.h"
-#include "SpellScript.h"
-
 // Ours
-class spell_q10612_10613_the_fel_and_the_furious : public SpellScriptLoader
+enum TheFelAndTheFurious
 {
-public:
-    spell_q10612_10613_the_fel_and_the_furious() : SpellScriptLoader("spell_q10612_10613_the_fel_and_the_furious") { }
+    SPELL_ROCKET_LAUNCHER = 38083
+};
 
-    class spell_q10612_10613_the_fel_and_the_furious_SpellScript : public SpellScript
+class spell_q10612_10613_the_fel_and_the_furious : public SpellScript
+{
+    PrepareSpellScript(spell_q10612_10613_the_fel_and_the_furious);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
     {
-        PrepareSpellScript(spell_q10612_10613_the_fel_and_the_furious_SpellScript);
+        return ValidateSpellInfo({ SPELL_ROCKET_LAUNCHER });
+    }
 
-        void HandleScriptEffect(SpellEffIndex  /*effIndex*/)
+    void HandleScriptEffect(SpellEffIndex  /*effIndex*/)
+    {
+        Player* charmer = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself();
+        if (!charmer)
+            return;
+
+        std::list<GameObject*> gList;
+        GetCaster()->GetGameObjectListWithEntryInGrid(gList, 184979, 30.0f);
+        uint8 counter = 0;
+        for (std::list<GameObject*>::const_iterator itr = gList.begin(); itr != gList.end(); ++itr, ++counter)
         {
-            Player* charmer = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself();
-            if (!charmer)
-                return;
-
-            std::list<GameObject*> gList;
-            GetCaster()->GetGameObjectListWithEntryInGrid(gList, 184979, 30.0f);
-            uint8 counter = 0;
-            for (std::list<GameObject*>::const_iterator itr = gList.begin(); itr != gList.end(); ++itr, ++counter)
+            if (counter >= 10)
+                break;
+            GameObject* go = *itr;
+            if (!go->isSpawned())
+                continue;
+            Creature* cr2 = go->SummonTrigger(go->GetPositionX(), go->GetPositionY(), go->GetPositionZ() + 2.0f, 0.0f, 100);
+            if (cr2)
             {
-                if (counter >= 10)
-                    break;
-                GameObject* go = *itr;
-                if (!go->isSpawned())
-                    continue;
-                Creature* cr2 = go->SummonTrigger(go->GetPositionX(), go->GetPositionY(), go->GetPositionZ() + 2.0f, 0.0f, 100);
-                if (cr2)
-                {
-                    cr2->SetFaction(FACTION_MONSTER);
-                    cr2->ReplaceAllUnitFlags(UNIT_FLAG_NONE);
-                    GetCaster()->CastSpell(cr2, 38083, true);
-                }
-
-                go->SetLootState(GO_JUST_DEACTIVATED);
-                charmer->KilledMonsterCredit(21959);
+                cr2->SetFaction(FACTION_MONSTER);
+                cr2->ReplaceAllUnitFlags(UNIT_FLAG_NONE);
+                GetCaster()->CastSpell(cr2, SPELL_ROCKET_LAUNCHER, true);
             }
-        }
 
-        void Register() override
-        {
-            OnEffectHitTarget += SpellEffectFn(spell_q10612_10613_the_fel_and_the_furious_SpellScript::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+            go->SetLootState(GO_JUST_DEACTIVATED);
+            charmer->KilledMonsterCredit(21959);
         }
-    };
+    }
 
-    SpellScript* GetSpellScript() const override
+    void Register() override
     {
-        return new spell_q10612_10613_the_fel_and_the_furious_SpellScript();
+        OnEffectHitTarget += SpellEffectFn(spell_q10612_10613_the_fel_and_the_furious::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
     }
 };
 
-class spell_q10563_q10596_to_legion_hold : public SpellScriptLoader
+class spell_q10563_q10596_to_legion_hold_aura : public AuraScript
 {
-public:
-    spell_q10563_q10596_to_legion_hold() : SpellScriptLoader("spell_q10563_q10596_to_legion_hold") { }
+    PrepareAuraScript(spell_q10563_q10596_to_legion_hold_aura);
 
-    class spell_q10563_q10596_to_legion_hold_AuraScript : public AuraScript
+    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        PrepareAuraScript(spell_q10563_q10596_to_legion_hold_AuraScript)
-
-        void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        if (Player* player = GetTarget()->ToPlayer())
         {
-            if (Player* player = GetTarget()->ToPlayer())
-            {
-                player->KilledMonsterCredit(21502);
-                player->SetControlled(false, UNIT_STATE_STUNNED);
-            }
+            player->KilledMonsterCredit(21502);
+            player->SetControlled(false, UNIT_STATE_STUNNED);
         }
+    }
 
-        void HandleEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-        {
-            if (Player* player = GetTarget()->ToPlayer())
-            {
-                player->SetControlled(true, UNIT_STATE_STUNNED);
-                player->SummonCreature(21633, -3311.13f, 2946.15f, 171.1f, 4.86f, TEMPSUMMON_TIMED_DESPAWN, 64000);
-            }
-        }
-
-        void Register() override
-        {
-            OnEffectApply += AuraEffectApplyFn(spell_q10563_q10596_to_legion_hold_AuraScript::HandleEffectApply, EFFECT_0, SPELL_AURA_TRANSFORM, AURA_EFFECT_HANDLE_REAL);
-            OnEffectRemove += AuraEffectRemoveFn(spell_q10563_q10596_to_legion_hold_AuraScript::HandleEffectRemove, EFFECT_0, SPELL_AURA_TRANSFORM, AURA_EFFECT_HANDLE_REAL);
-        }
-    };
-
-    AuraScript* GetAuraScript() const override
+    void HandleEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        return new spell_q10563_q10596_to_legion_hold_AuraScript();
+        if (Player* player = GetTarget()->ToPlayer())
+        {
+            player->SetControlled(true, UNIT_STATE_STUNNED);
+            player->SummonCreature(21633, -3311.13f, 2946.15f, 171.1f, 4.86f, TEMPSUMMON_TIMED_DESPAWN, 64000);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_q10563_q10596_to_legion_hold_aura::HandleEffectApply, EFFECT_0, SPELL_AURA_TRANSFORM, AURA_EFFECT_HANDLE_REAL);
+        OnEffectRemove += AuraEffectRemoveFn(spell_q10563_q10596_to_legion_hold_aura::HandleEffectRemove, EFFECT_0, SPELL_AURA_TRANSFORM, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -426,133 +415,125 @@ public:
 
 enum EnshlavedNetherwingDrake
 {
+    // Quest
+    QUEST_THE_FORCE_OF_NELTHARAKU   = 10854,
+
     // Spells
     SPELL_HIT_FORCE_OF_NELTHARAKU   = 38762,
     SPELL_FORCE_OF_NELTHARAKU       = 38775,
 
     // Creatures
     NPC_DRAGONMAW_SUBJUGATOR        = 21718,
-    NPC_ESCAPE_DUMMY                = 22317
+    NPC_DRAGONMAW_WRANGLER          = 21717,
+    NPC_ESCAPE_DUMMY                = 22317,
+
+    // Point
+    POINT_DESPAWN                   = 1
 };
 
-class npc_enslaved_netherwing_drake : public CreatureScript
+struct npc_enslaved_netherwing_drake : public ScriptedAI
 {
 public:
-    npc_enslaved_netherwing_drake() : CreatureScript("npc_enslaved_netherwing_drake") { }
-
-    CreatureAI* GetAI(Creature* creature) const override
+    npc_enslaved_netherwing_drake(Creature* creature) : ScriptedAI(creature)
     {
-        return new npc_enslaved_netherwing_drakeAI(creature);
+        _tapped = false;
+        Reset();
     }
 
-    struct npc_enslaved_netherwing_drakeAI : public ScriptedAI
+    void Reset() override
     {
-        npc_enslaved_netherwing_drakeAI(Creature* creature) : ScriptedAI(creature)
+        scheduler.CancelAll();
+        if (!_tapped)
         {
-            PlayerGUID.Clear();
-            Tapped = false;
-            Reset();
+            me->RestoreFaction();
+            me->SetReactState(REACT_AGGRESSIVE);
         }
 
-        ObjectGuid PlayerGUID;
-        uint32 FlyTimer;
-        bool Tapped;
+        me->SetDisableGravity(false);
+        me->SetVisible(true);
+    }
 
-        void Reset() override
+    void JustDied(Unit* /*killer*/) override
+    {
+        _tapped = false;
+        me->RestoreFaction();
+    }
+
+    void SpellHit(Unit* caster, SpellInfo const* spell) override
+    {
+        Player* playerCaster = caster->ToPlayer();
+        if (!playerCaster)
+            return;
+
+        if (spell->Id == SPELL_HIT_FORCE_OF_NELTHARAKU && !_tapped &&
+            playerCaster->GetQuestStatus(QUEST_THE_FORCE_OF_NELTHARAKU) == QUEST_STATUS_INCOMPLETE)
         {
-            if (!Tapped)
-                me->SetFaction(FACTION_ORC_DRAGONMAW);
+            _tapped = true;
+            _playerGUID = caster->GetGUID();
 
-            FlyTimer = 1000;
-            me->SetDisableGravity(false);
-            me->SetVisible(true);
-        }
-
-        void SpellHit(Unit* caster, SpellInfo const* spell) override
-        {
-            if (!caster)
-                return;
-
-            if (caster->GetTypeId() == TYPEID_PLAYER && spell->Id == SPELL_HIT_FORCE_OF_NELTHARAKU && !Tapped)
+            scheduler.Schedule(2s, [this](TaskContext)
             {
-                Tapped = true;
-                PlayerGUID = caster->GetGUID();
-
                 me->SetFaction(FACTION_FLAYER_HUNTER); // Not sure if this is correct, it was taken off of Mordenai.
 
-                Unit* Dragonmaw = me->FindNearestCreature(NPC_DRAGONMAW_SUBJUGATOR, 50);
-                if (Dragonmaw)
+                if (Unit* dragonmaw = me->FindNearestCreature(NPC_DRAGONMAW_SUBJUGATOR, 25.0f))
+                    AttackStart(dragonmaw);
+                else if (Unit* dragonmaw = me->FindNearestCreature(NPC_DRAGONMAW_WRANGLER, 25.0f))
+                    AttackStart(dragonmaw);
+                scheduler.Schedule(2s, [this](TaskContext)
                 {
-                    me->AddThreat(Dragonmaw, 100000.0f);
-                    AttackStart(Dragonmaw);
-                }
-
-                HostileReference* ref = me->GetThreatMgr().GetOnlineContainer().getReferenceByTarget(caster);
-                if (ref)
-                    ref->removeReference();
-            }
-        }
-
-        void MovementInform(uint32 type, uint32 id) override
-        {
-            if (type != POINT_MOTION_TYPE)
-                return;
-
-            if (id == 1)
-            {
-                me->SetVisible(false);
-                me->SetDisableGravity(false);
-                Unit::DealDamage(me, me, me->GetHealth(), nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, false);
-                me->RemoveCorpse();
-            }
-            me->DespawnOrUnsummon(1);
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            if (!UpdateVictim())
-            {
-                if (Tapped)
-                {
-                    if (FlyTimer <= diff)
+                    _tapped = false;
+                    Position pos;
+                    if (Unit* escapeDummy = me->FindNearestCreature(NPC_ESCAPE_DUMMY, 30.0f))
+                        pos = escapeDummy->GetPosition();
+                    else
                     {
-                        Tapped = false;
-                        if (PlayerGUID)
-                        {
-                            Player* player = ObjectAccessor::GetPlayer(*me, PlayerGUID);
-                            if (player && player->GetQuestStatus(10854) == QUEST_STATUS_INCOMPLETE)
-                            {
-                                DoCast(player, SPELL_FORCE_OF_NELTHARAKU, true);
-                                /*
-                                float x, y, z;
-                                me->GetPosition(x, y, z);
-
-                                float dx, dy, dz;
-                                me->GetRandomPoint(x, y, z, 20, dx, dy, dz);
-                                dz += 20; // so it's in the air, not ground*/
-
-                                Position pos;
-                                if (Unit* EscapeDummy = me->FindNearestCreature(NPC_ESCAPE_DUMMY, 30))
-                                    pos = EscapeDummy->GetPosition();
-                                else
-                                {
-                                    pos = me->GetRandomNearPosition(20);
-                                    pos.m_positionZ += 25;
-                                }
-
-                                me->SetDisableGravity(true);
-                                me->GetMotionMaster()->MovePoint(1, pos);
-                            }
-                        }
+                        pos = me->GetRandomNearPosition(20.0f);
+                        pos.m_positionZ += 25.0f;
                     }
-                    else FlyTimer -= diff;
-                }
-                return;
-            }
 
-            DoMeleeAttackIfReady();
+                    me->SetDisableGravity(true);
+                    me->GetMotionMaster()->MovePoint(POINT_DESPAWN, pos);
+                    me->SetReactState(REACT_PASSIVE);
+                    scheduler.Schedule(100ms, [this](TaskContext)
+                    {
+                        if (Player* player = _GetPlayer())
+                        {
+                            DoCast(player, SPELL_FORCE_OF_NELTHARAKU, true);
+                        }
+                        me->DespawnOrUnsummon(3s, 0s);
+                    });
+                });
+            });
         }
-    };
+    }
+
+    void MovementInform(uint32 type, uint32 data) override
+    {
+        if (type == POINT_MOTION_TYPE && data == POINT_DESPAWN)
+        {
+            me->SetVisible(false);
+            me->SetDisableGravity(false);
+            me->DespawnOrUnsummon();
+        }
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        scheduler.Update(diff);
+
+        if (!UpdateVictim())
+            return;
+
+        if (me->HasUnitState(UNIT_STATE_CASTING))
+            return;
+
+        DoMeleeAttackIfReady();
+    }
+private:
+    bool _tapped;
+    ObjectGuid _playerGUID;
+
+    Player* _GetPlayer() { return ObjectAccessor::GetPlayer(*me, _playerGUID); }
 };
 
 /*#####
@@ -1840,14 +1821,14 @@ public:
 void AddSC_shadowmoon_valley()
 {
     // Ours
-    new spell_q10612_10613_the_fel_and_the_furious();
-    new spell_q10563_q10596_to_legion_hold();
+    RegisterSpellScript(spell_q10612_10613_the_fel_and_the_furious);
+    RegisterSpellScript(spell_q10563_q10596_to_legion_hold_aura);
 
     // Theirs
     new npc_invis_infernal_caster();
     new npc_infernal_attacker();
     new npc_mature_netherwing_drake();
-    new npc_enslaved_netherwing_drake();
+    RegisterCreatureAI(npc_enslaved_netherwing_drake);
     new npc_dragonmaw_peon();
     new npc_drake_dealer_hurlunk();
     new npcs_flanis_swiftwing_and_kagrosh();
