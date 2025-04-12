@@ -149,10 +149,10 @@ void WorldSession::HandleCreatureQueryOpcode(WorldPacket& recvData)
 
         CreatureQuestItemList const* items = sObjectMgr->GetCreatureQuestItemList(entry);
         if (items)
-            for (size_t i = 0; i < MAX_CREATURE_QUEST_ITEMS; ++i)
+            for (std::size_t i = 0; i < MAX_CREATURE_QUEST_ITEMS; ++i)
                 data << (i < items->size() ? uint32((*items)[i]) : uint32(0));
         else
-            for (size_t i = 0; i < MAX_CREATURE_QUEST_ITEMS; ++i)
+            for (std::size_t i = 0; i < MAX_CREATURE_QUEST_ITEMS; ++i)
                 data << uint32(0);
 
         data << uint32(ci->movementId);                              // CreatureMovementInfo.dbc
@@ -210,10 +210,10 @@ void WorldSession::HandleGameObjectQueryOpcode(WorldPacket& recvData)
 
         GameObjectQuestItemList const* items = sObjectMgr->GetGameObjectQuestItemList(entry);
         if (items)
-            for (size_t i = 0; i < MAX_GAMEOBJECT_QUEST_ITEMS; ++i)
+            for (std::size_t i = 0; i < MAX_GAMEOBJECT_QUEST_ITEMS; ++i)
                 data << (i < items->size() ? uint32((*items)[i]) : uint32(0));
         else
-            for (size_t i = 0; i < MAX_GAMEOBJECT_QUEST_ITEMS; ++i)
+            for (std::size_t i = 0; i < MAX_GAMEOBJECT_QUEST_ITEMS; ++i)
                 data << uint32(0);
 
         SendPacket(&data);
@@ -393,7 +393,7 @@ void WorldSession::HandlePageTextQueryOpcode(WorldPacket& recvData)
                     ObjectMgr::GetLocaleString(player->Text, loc_idx, Text);
 
             data << Text;
-            data << uint32(pageText->NextPage);
+            data << pageText->NextPage;
             pageID = pageText->NextPage;
         }
         SendPacket(&data);

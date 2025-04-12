@@ -15,7 +15,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CreatureScript.h"
 #include "InstanceMapScript.h"
 #include "InstanceScript.h"
 #include "Player.h"
@@ -90,8 +89,6 @@ public:
             if (_baronRunTime > 0)
                 if (Aura* aura = player->AddAura(SPELL_BARON_ULTIMATUM, player))
                     aura->SetDuration(_baronRunTime * MINUTE * IN_MILLISECONDS);
-            if (_barthilasrunProgress == DONE)
-                instance->LoadGrid(3663.229980f, -3619.139893f);
         }
 
         void OnCreatureCreate(Creature* creature) override
@@ -262,7 +259,6 @@ public:
         {
             if (_zigguratState1 == 2 && _zigguratState2 == 2 && _zigguratState3 == 2)
             {
-                instance->LoadGrid(4035.83f, -3336.31f);
                 if (Creature* baron = instance->GetCreature(_baronRivendareGUID))
                     baron->AI()->Talk(SAY_BRAON_ZIGGURAT_FALL_YELL);
 
@@ -302,7 +298,6 @@ public:
                         DoCastSpellOnPlayers(SPELL_BARON_ULTIMATUM);
                         events.ScheduleEvent(EVENT_BARON_TIME, 60000);
 
-                        instance->LoadGrid(4035.83f, -3336.31f);
                         if (Creature* baron = instance->GetCreature(_baronRivendareGUID))
                             baron->AI()->Talk(SAY_BARON_INIT_YELL);
                     }
@@ -506,7 +501,6 @@ public:
                 case EVENT_BARON_TIME:
                 {
                     --_baronRunTime;
-                    instance->LoadGrid(4035.83f, -3336.31f);
                     Creature* baron = instance->GetCreature(_baronRivendareGUID);
                     if (baron && !baron->IsInCombat())
                     {
@@ -537,7 +531,6 @@ public:
                 }
                 case EVENT_EXECUTE_PRISONER:
                 {
-                    instance->LoadGrid(4035.83f, -3336.31f);
                     Creature* baron = instance->GetCreature(_baronRivendareGUID);
                     if (baron && baron->IsAlive())
                     {

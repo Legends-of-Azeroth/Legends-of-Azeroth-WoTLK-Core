@@ -15,6 +15,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "violet_hold.h"
 #include "CreatureScript.h"
 #include "GameObjectScript.h"
 #include "PassiveAI.h"
@@ -24,7 +25,6 @@
 #include "ScriptedGossip.h"
 #include "SpellScript.h"
 #include "SpellScriptLoader.h"
-#include "violet_hold.h"
 
 /// @todo: Missing Sinclari Trigger announcements (32204) Look at its creature_text for more info.
 /// @todo: Activation Crystals (go_vh_activation_crystal) (193611) are spammable, should be a 1 time use per crystal.
@@ -91,7 +91,7 @@ public:
     {
         ClearGossipMenuFor(player);
 
-        switch(uiAction)
+        switch (uiAction)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 CloseGossipMenuFor(player);
@@ -172,7 +172,7 @@ public:
 
             events.Update(diff);
 
-            switch(events.ExecuteEvent())
+            switch (events.ExecuteEvent())
             {
                 case 0:
                     break;
@@ -325,7 +325,7 @@ struct violet_hold_trashAI : public npc_escortAI
         if (!bAddedWP)
         {
             bAddedWP = true;
-            switch(PLoc)
+            switch (PLoc)
             {
                 case 0:
                     for(int i = 0; i < 6; i++)
@@ -1040,30 +1040,30 @@ public:
             if (!pInstance)
                 return;
 
-            switch(uiBoss)
+            switch (uiBoss)
             {
                 case 1:
-                    if(uiWPointId == 2)
+                    if (uiWPointId == 2)
                         FinishPointReached();
                     break;
                 case 2:
-                    if(uiWPointId == 2)
+                    if (uiWPointId == 2)
                         FinishPointReached();
                     break;
                 case 3:
-                    if(uiWPointId == 1)
+                    if (uiWPointId == 1)
                         FinishPointReached();
                     break;
                 case 4:
-                    if(uiWPointId == 0)
+                    if (uiWPointId == 0)
                         FinishPointReached();
                     break;
                 case 5:
-                    if(uiWPointId == 0)
+                    if (uiWPointId == 0)
                         FinishPointReached();
                     break;
                 case 6:
-                    if(uiWPointId == 4)
+                    if (uiWPointId == 4)
                         FinishPointReached();
                     break;
             }
@@ -1073,10 +1073,10 @@ public:
         {
             npc_escortAI::UpdateAI(diff);
 
-            if(!bAddedWPs)
+            if (!bAddedWPs)
             {
                 bAddedWPs = true;
-                switch(uiBoss)
+                switch (uiBoss)
                 {
                     case 1:
                         for(int i = 0; i < 3; i++)

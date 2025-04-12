@@ -15,13 +15,13 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "forge_of_souls.h"
 #include "CreatureScript.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "SpellScript.h"
 #include "SpellScriptLoader.h"
-#include "forge_of_souls.h"
 
 enum Yells
 {
@@ -81,7 +81,7 @@ public:
         void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
-            switch(events.ExecuteEvent())
+            switch (events.ExecuteEvent())
             {
                 case 0:
                     break;
@@ -206,7 +206,7 @@ public:
     bool OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction) override
     {
         ClearGossipMenuFor(player);
-        switch(uiAction)
+        switch (uiAction)
         {
             case GOSSIP_ACTION_INFO_DEF+1:
                 CloseGossipMenuFor(player);
@@ -303,4 +303,3 @@ void AddSC_forge_of_souls()
     new npc_fos_leader_second();
     RegisterSpellScript(spell_shield_of_bones_aura);
 }
-

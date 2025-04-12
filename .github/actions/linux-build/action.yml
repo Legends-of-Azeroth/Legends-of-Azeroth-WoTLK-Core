@@ -16,9 +16,24 @@ inputs:
     description: Flag to install modules or not
     required: true
     type: boolean
+  tools:
+    default: none
+    description: Flag to enable tools build
+    required: false
+    type: string
   pch:
     default: false
     description: Flag to enable or disable PCH
+    required: false
+    type: boolean
+  maxerrors:
+    default: 1
+    description: Max allowed error count before compilation stops
+    required: false
+    type: number
+  keepgoing:
+    default: false
+    description: Flag to continue build after errors
     required: false
     type: boolean
 runs:
@@ -31,11 +46,11 @@ runs:
         path: ${{ github.workspace }}/var/ccache
           # format
           # ccache:OS:CC_CXX:MODULES:GITHUB_REF:GITHUB_SHA
-        key: ccache:ubuntu-latest:${{ inputs.CC }}_${{ inputs.CXX }}:${{ inputs.modules }}:${{ github.ref }}:${{ github.sha }}
+        key: ccache:${{ runner.os }}:${{ inputs.CC }}_${{ inputs.CXX }}:${{ inputs.modules }}:${{ github.ref }}:${{ github.sha }}
         restore-keys: |
-          ccache:ubuntu-latest:${{ inputs.CC }}_${{ inputs.CXX }}:${{ inputs.modules }}:${{ github.ref }}
-          ccache:ubuntu-latest:${{ inputs.CC }}_${{ inputs.CXX }}:${{ inputs.modules }}
-          ccache:ubuntu-latest:${{ inputs.CC }}_${{ inputs.CXX }}
+          ccache:${{ runner.os }}:${{ inputs.CC }}_${{ inputs.CXX }}:${{ inputs.modules }}:${{ github.ref }}
+          ccache:${{ runner.os }}:${{ inputs.CC }}_${{ inputs.CXX }}:${{ inputs.modules }}
+          ccache:${{ runner.os }}:${{ inputs.CC }}_${{ inputs.CXX }}
 
     # This script moves sql files from "data/sql/updates/pending_$DB" to the
     # proper folder for the db
@@ -94,13 +109,15 @@ runs:
         cmake "$GITHUB_WORKSPACE" \
           -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/env/dist" \
           -DAPPS_BUILD="all" \
-          -DTOOLS_BUILD="all" \
+          -DTOOLS_BUILD=${{ inputs.tools }} \
           -DSCRIPTS="static" \
           -DMODULES="static" \
           -DWITH_WARNINGS="ON" \
           -DCMAKE_BUILD_TYPE="Release" \
           -DCMAKE_CXX_COMPILER_LAUNCHER="ccache" \
           -DCMAKE_C_COMPILER_LAUNCHER="ccache" \
+          -DCMAKE_C_FLAGS="-Werror ${{ startsWith(inputs.cc, 'clang') && '-ferror-limit=' || '-fmax-errors=' }}${{inputs.maxerrors}} " \
+          -DCMAKE_CXX_FLAGS="-Werror ${{ startsWith(inputs.cxx, 'clang') && '-ferror-limit=' || '-fmax-errors=' }}${{inputs.maxerrors}}" \
           -DBUILD_TESTING="ON" \
           -DUSE_SCRIPTPCH=${{ inputs.pch == 'true' && 'ON' || '' }} \
           -DUSE_COREPCH=${{ inputs.pch == 'true' && 'ON' || '' }} \
@@ -109,7 +126,9 @@ runs:
     - name: build
       shell: bash
       working-directory: "${{ github.workspace }}/build"
-      run: cmake --build . --config "Release" -j "$(($(nproc) + 2))"
+      run: |
+        # '--' passes '--keep-going' to the underlying build system (make)
+        cmake --build . --config "Release" -j "$(($(nproc) + 2))" ${{ inputs.keepgoing == 'true' && '-- --keep-going' || '' }}
 
     - name: install
       shell: bash
@@ -141,10 +160,6 @@ runs:
     - name: Start MySQL container
       shell: bash
       run: sudo systemctl start mysql.service
-
-    - name: run dbimport
-      shell: bash
-      run: env/dist/bin/dbimport
 
     - name: Dry run authserver
       shell: bash

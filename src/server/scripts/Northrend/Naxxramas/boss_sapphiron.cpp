@@ -92,12 +92,9 @@ public:
     struct boss_sapphironAI : public BossAI
     {
         explicit boss_sapphironAI(Creature* c) : BossAI(c, BOSS_SAPPHIRON)
-        {
-            pInstance = me->GetInstanceScript();
-        }
+        {}
 
         EventMap events;
-        InstanceScript* pInstance;
         uint8 iceboltCount{};
         uint32 spawnTimer{};
         GuidList blockList;
@@ -142,7 +139,7 @@ public:
             if (PlList.IsEmpty())
                 return;
 
-            for (const auto& i : PlList)
+            for (auto const& i : PlList)
             {
                 if (Player* player = i.GetSource())
                 {
@@ -221,10 +218,8 @@ public:
 
         void KilledUnit(Unit* who) override
         {
-            if (who->GetTypeId() == TYPEID_PLAYER && pInstance)
-            {
-                pInstance->SetData(DATA_IMMORTAL_FAIL, 0);
-            }
+            if (who->IsPlayer())
+                instance->StorePersistentData(PERSISTENT_DATA_IMMORTAL_FAIL, 1);
         }
 
         void UpdateAI(uint32 diff) override
@@ -325,7 +320,7 @@ public:
                         auto i = me->GetThreatMgr().GetThreatList().begin();
                         for (; i != me->GetThreatMgr().GetThreatList().end(); ++i)
                         {
-                            if ((*i)->getTarget()->GetTypeId() == TYPEID_PLAYER)
+                            if ((*i)->getTarget()->IsPlayer())
                             {
                                 bool inList = false;
                                 if (!blockList.empty())
@@ -400,11 +395,11 @@ public:
                 case EVENT_HUNDRED_CLUB:
                     {
                         Map::PlayerList const& pList = me->GetMap()->GetPlayers();
-                        for (const auto& itr : pList)
+                        for (auto const& itr : pList)
                         {
-                            if (itr.GetSource()->GetResistance(SPELL_SCHOOL_FROST) > 100 && pInstance)
+                            if (itr.GetSource()->GetResistance(SPELL_SCHOOL_FROST) > 100)
                             {
-                                pInstance->SetData(DATA_HUNDRED_CLUB, 0);
+                                instance->SetData(DATA_HUNDRED_CLUB, 0);
                                 return;
                             }
                         }
@@ -453,4 +448,3 @@ void AddSC_boss_sapphiron()
     new boss_sapphiron();
     RegisterSpellScript(spell_sapphiron_frost_explosion);
 }
-
